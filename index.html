@@ -1,0 +1,73 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TCC BIBLE</title>
+<style>body{font-family:Arial;margin:0;background:#fff7e0}header{background:linear-gradient(90deg,#b7791f,#7a1f1f);color:#fff;padding:14px;text-align:center} .box{background:#fff;margin:10px;padding:14px;border-radius:14px} button{padding:12px;border:none;border-radius:10px;background:#b7791f;color:#fff;margin:4px;font-weight:bold} button.blue{background:#1e4db7}button.red{background:#b71c1c}button.green{background:#2e7d32}button.gray{background:#666}button.purple{background:#6a1b9a} .bookBtn{background:#fdf2d0;color:#222;width:100%;text-align:left;padding:14px} .chapBtn{background:#e3f2fd;color:#111;width:60px;height:50px} .verse{padding:12px;border-bottom:1px solid #eee;font-size:17px;line-height:1.6} .topicBtn{background:#f3e5f5;color:#222;width:100%;text-align:left;padding:14px} .hidden{display:none}</style></head>
+<body><header><h2>📖 TCC BIBLE</h2><p>Trinity Celebration Centre - You Are Blessed</p></header>
+<div id="pageHome"><div class="box" style="text-align:center"><h3>🏠 HOME</h3><p><b>Translation:</b> <button onclick="setLang('sw')">SWAHILI</button> <button onclick="setLang('en')" class="blue">ENGLISH</button> <b id="langShow">SWAHILI</b></p>
+<button onclick="goPage('pageBooks')" style="width:100%;padding:16px">📖 1. BIBLE</button><button onclick="goPage('pageTeach')" class="purple" style="width:100%;padding:16px">💡 2. TEACHINGS</button><button onclick="goPage('pageTrivia')" class="blue" style="width:100%;padding:16px">🎮 3. TRIVIA</button><button onclick="goPage('pageNote')" class="green" style="width:100%;padding:16px">📝 4. NOTEPAD</button></div></div>
+<div id="pageBooks" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageHome')">⬅️ HOME</button><h3>BOOKS</h3><div><button onclick="showTestament('OT')" class="red">📜 OLD - 39</button><button onclick="showTestament('NT')" class="blue">✝️ NEW - 27</button></div><input id="searchBox" placeholder="Tafuta... Genesis, Exodus, John" oninput="doSearch()" style="width:100%;padding:12px;border-radius:10px;border:2px solid #b7791f;margin-top:8px;box-sizing:border-box"></div><div id="booksList" class="box"></div></div>
+<div id="pageChapters" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageBooks')">⬅️ BACK</button><h3 id="chapTitle"></h3><p id="chapSub"></p></div><div id="chaptersList" class="box"></div></div>
+<div id="pageVerses" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageChapters')">⬅️ BACK</button><h3 id="verseTitle"></h3><p>Translation: <b id="langShow2">SWAHILI</b> <button onclick="switchLangInVerse()">🔄 BADILISHA SW / EN</button></p><div><button onclick="prevChap()">⬅️ PREV</button><button onclick="nextChap()">NEXT ➡️</button></div></div><div id="versesList" class="box"></div></div>
+<div id="pageTeach" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageHome')">⬅️ HOME</button><h3>💡 TEACHINGS</h3><input id="teachSearch" placeholder="Tafuta... marriage, fear, prayer" oninput="searchTeach()" style="width:100%;padding:12px;border-radius:10px;border:2px solid #6a1b9a;box-sizing:border-box"></div><div id="teachList" class="box"></div><div id="teachDetail" class="box"></div></div>
+<div id="pageTrivia" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageHome')">⬅️ HOME</button><h3>🎮 TRIVIA</h3><p id="score"></p><h3 id="qText"></h3><div id="qBtns"></div><p id="qMsg"></p><button onclick="nextQ()" class="blue">NEXT ➡️</button></div></div>
+<div id="pageNote" class="hidden"><div class="box"><button class="gray" onclick="goPage('pageHome')">⬅️ HOME</button><h3>📝 NOTEPAD</h3><textarea id="noteBox" rows="10" style="width:100%;box-sizing:border-box"></textarea><br><button onclick="saveNote()" class="green">SAVE</button><p id="noteMsg"></p></div></div>
+<script>
+let lang='sw';
+let OT=[["Genesis",50],["Exodus",40],["Leviticus",27],["Numbers",36],["Deuteronomy",34],["Joshua",24],["Judges",21],["Ruth",4],["1 Samuel",31],["2 Samuel",24],["1 Kings",22],["2 Kings",25],["1 Chronicles",29],["2 Chronicles",36],["Ezra",10],["Nehemiah",13],["Esther",10],["Job",42],["Psalms",150],["Proverbs",31],["Ecclesiastes",12],["Song of Solomon",8],["Isaiah",66],["Jeremiah",52],["Lamentations",5],["Ezekiel",48],["Daniel",12],["Hosea",14],["Joel",3],["Amos",9],["Obadiah",1],["Jonah",4],["Micah",7],["Nahum",3],["Habakkuk",3],["Zephaniah",3],["Haggai",2],["Zechariah",14],["Malachi",4]];
+let NT=[["Matthew",28],["Mark",16],["Luke",24],["John",21],["Acts",28],["Romans",16],["1 Corinthians",16],["2 Corinthians",13],["Galatians",6],["Ephesians",6],["Philippians",4],["Colossians",4],["1 Thessalonians",5],["2 Thessalonians",3],["1 Timothy",6],["2 Timothy",4],["Titus",3],["Philemon",1],["Hebrews",13],["James",5],["1 Peter",5],["2 Peter",3],["1 John",5],["2 John",1],["3 John",1],["Jude",1],["Revelation",22]];
+let ALL=[...OT,...NT];
+let curTest='OT',curBook='Genesis',curChap=1,curCount=50,score=0,qIndex=0;
+document.getElementById('noteBox').value=localStorage.getItem('ludNote')||'';
+let T=[["💍 MARRIAGE","Ndoa ni agano. Mume mpende mke kama Kristo. Mke mtii mume. Omba, samehe, ongea.",[["Genesis 2:24","Wawe mwili mmoja"]]],["❤️ RELATIONSHIP","Mahusiano ya Mungu yana mipaka.",[["Proverbs 4:23","Linda moyo wako"]]],["🧒 YOUTH","Epuka ngono kabla ya ndoa. Mwili ni hekalu.",[["1 Corinthians 6:18","Ikimbieni zinaa"]]],["💭 DREAMS","Mungu huongea kupitia ndoto.",[["Genesis 37:5","Yusufu aliota"]]],["🙏 FAITH","Imani ni kuamini hata huoni.",[["Hebrews 11:1","Imani ni hakika"]]],["❤️ LOVE","Mungu ni upendo.",[["John 3:16","Mungu aliupenda ulimwengu"]]],["⏳ PATIENCE","Subiri wakati wa Mungu.",[["Psalms 27:14","Mngoje Bwana"]]],["🤝 UNITY","Tuko mwili mmoja.",[["Psalms 133:1","Ni vema ndugu wakikaa pamoja"]]],["🛡️ SELF-CONTROL","Kujizuia.",[["Galatians 5:23","Tunda ni kujizuia"]]],["💊 HEALING","Mungu ni Mponyaji.",[["Exodus 15:26","Mimi ni Bwana nikuponyaye"]]],["🤍 FORGIVENESS","Samehe.",[["Matthew 6:14","Mkisamehe, Baba atawasamehe"]]],["👑 GOD","Mungu ni Baba.",[["Genesis 1:1","Mungu aliumba"]]],["😇 ANGELS","Malaika wanatulinda.",[["Psalms 91:11","Atawaagiza malaika"]]],["✝️ JESUS","Yesu alikufa na akafufuka.",[["John 3:16","Mungu alimtoa Mwanawe"]]],["😨 OVERCOME FEAR","Hofu inatoka kwa shetani.",[["2 Timothy 1:7","Mungu hakutupa roho ya woga"]]],["⚔️ OVERCOME SATANIC ATTACKS","Silaha: Damu ya Yesu.",[["James 4:7","Mpingeni shetani"]]],["🙏 HOW TO PRAY","Sifu, Tubu, Omba.",[["Matthew 6:9","Baba yetu"]]],["😔 PRAYER IN STRUGGLE","Kimbilia Mungu.",[["Psalms 34:17","Bwana huwasikia"]]],["💰 BLESSING","Mungu anataka kukubariki.",[["Jeremiah 29:11","Mawazo ya tumaini"]]]];
+let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],ans:0},{q:"Nani alijenga Safina?",opts:["Musa","Nuhu","Daudi"],ans:1},{q:"Yesu alizaliwa wapi?",opts:["Nazareti","Bethlehemu","Misri"],ans:1}];
+// HIFADHI KIMYA KIMYA - HAKUNA MANENO YANAYOONEKANA
+function saveVerse(key,list){ try{ localStorage.setItem('TCC_'+key, JSON.stringify(list)); }catch(e){} }
+function getVerse(key){ try{ let s=localStorage.getItem('TCC_'+key); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
+function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
+function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
+function doSearch(){let q=document.getElementById('searchBox').value.trim().toLowerCase();if(!q){showTestament(curTest);return;}let f=ALL.filter(b=>b[0].toLowerCase().includes(q));let h='<h3>🔍 '+q+'</h3>';f.forEach(b=>{h+='<button class="bookBtn" data-book="'+b[0]+'" data-count="'+b[1]+'">📖 '+b[0]+' - '+b[1]+' ➡️</button>';});document.getElementById('booksList').innerHTML=h;bindBooks();}
+function showTestament(t){curTest=t;let list=t=='OT'?OT:NT;let h='<h3>'+(t=='OT'?'📜 OLD - 39':'✝️ NEW - 27')+'</h3>';list.forEach(b=>{h+='<button class="bookBtn" data-book="'+b[0]+'" data-count="'+b[1]+'">📖 '+b[0]+' - '+b[1]+' ➡️</button>';});document.getElementById('booksList').innerHTML=h;bindBooks();}
+function bindBooks(){document.querySelectorAll('[data-book]').forEach(btn=>{btn.onclick=()=>{curBook=btn.getAttribute('data-book');curCount=parseInt(btn.getAttribute('data-count'));goPage('pageChapters');showChapters();};});}
+function showChapters(){document.getElementById('chapTitle').innerText=curBook;document.getElementById('chapSub').innerText=curBook+' ina sura '+curCount;let h='';for(let i=1;i<=curCount;i++){h+='<button class="chapBtn" data-chap="'+i+'">'+i+'</button> ';}document.getElementById('chaptersList').innerHTML=h;document.querySelectorAll('[data-chap]').forEach(btn=>{btn.onclick=()=>{curChap=parseInt(btn.getAttribute('data-chap'));goPage('pageVerses');loadVerses(curBook,curChap);};});}
+function prevChap(){if(curChap>1){curChap--;loadVerses(curBook,curChap);}}
+function nextChap(){if(curChap<curCount){curChap++;loadVerses(curBook,curChap);}}
+async function loadVerses(book,chap){
+  let key=book+'-'+chap+'-'+lang;
+  document.getElementById('verseTitle').innerText=book+' '+chap;
+  let saved=getVerse(key);
+  if(saved && saved.length>0){ showVerses(book,chap,saved); return; }
+  document.getElementById('versesList').innerHTML='';
+  try{
+    let list=[];
+    if(lang=='en'){
+      let r=await fetch('https://bible-api.com/'+encodeURIComponent(book+' '+chap));
+      let d=await r.json();
+      d.verses.forEach(v=>list.push({num:v.verse,text:v.text}));
+    }else{
+      let bookNum=ALL.findIndex(b=>b[0]==book)+1;
+      let r=await fetch('https://bolls.life/get-text/SUV/'+bookNum+'/'+chap+'/');
+      let d=await r.json();
+      if(Array.isArray(d)) d.forEach(v=>list.push({num:v.verse,text:v.text}));
+      if(list.length==0) throw new Error('empty');
+    }
+    saveVerse(key,list);
+    showVerses(book,chap,list);
+  }catch(e){
+    document.getElementById('versesList').innerHTML='';
+  }
+}
+// SASA INAONYESHA VERSE TU - HAKUNA MANENO MENGINE
+function showVerses(book,chap,list){
+  let h='<h3>'+book+' '+chap+' - '+(lang=='sw'?'Kiswahili':'English')+'</h3>';
+  list.forEach(v=>{h+='<div class="verse"><b>'+v.num+'.</b> '+v.text+'</div>';});
+  document.getElementById('versesList').innerHTML=h;window.scrollTo(0,0);
+}
+function showTeach(arr){let a=arr||T;let h='';a.forEach((t)=>{let idx=T.indexOf(t);h+='<button class="topicBtn" data-topic="'+idx+'">'+t[0]+' ➡️</button>';});document.getElementById('teachList').innerHTML=h;if(!arr)document.getElementById('teachDetail').innerHTML='';document.querySelectorAll('[data-topic]').forEach(btn=>{btn.onclick=()=>showTopic(parseInt(btn.getAttribute('data-topic')));});}
+function searchTeach(){let q=document.getElementById('teachSearch').value.toLowerCase();if(!q){showTeach();return;}let f=T.filter(t=>t[0].toLowerCase().includes(q)||t[1].toLowerCase().includes(q));showTeach(f);}
+function showTopic(i){let t=T[i];let h='<h3>'+t[0]+'</h3><p>'+t[1]+'</p><p><b>📖 Verse:</b></p>';t[2].forEach(v=>{h+='<div class="verse"><b>'+v[0]+'</b><br>'+v[1]+'<br><button onclick="openVerseFromRef(\''+v[0]+'\')">📖 SOMA KAMILI</button></div>';});document.getElementById('teachDetail').innerHTML=h;}
+function openVerseFromRef(ref){let p=ref.split(' ');let cv=p.pop();let book=p.join(' ');let chap=cv.split(':')[0];let b=ALL.find(x=>x[0].toLowerCase()==book.toLowerCase());if(!b)return;curBook=b[0];curCount=b[1];curChap=parseInt(chap);goPage('pageVerses');loadVerses(curBook,curChap);}
+function showQ(){let q=TRIVIA[qIndex];document.getElementById('qText').innerText=(qIndex+1)+'. '+q.q;document.getElementById('qMsg').innerText='';let h='';q.opts.forEach((o,i)=>{h+='<button onclick="checkAns('+i+')">'+o+'</button> ';});document.getElementById('qBtns').innerHTML=h;document.getElementById('score').innerText='Score: '+score;}
+function checkAns(i){let q=TRIVIA[qIndex];if(i==q.ans){score++;document.getElementById('qMsg').innerText='✅ Sahihi!';}else{document.getElementById('qMsg').innerText='❌ Jibu ni: '+q.opts[q.ans];}document.getElementById('score').innerText='Score: '+score;}
+function nextQ(){qIndex=(qIndex+1)%TRIVIA.length;showQ();}
+function saveNote(){localStorage.setItem('ludNote',document.getElementById('noteBox').value);document.getElementById('noteMsg').innerText='✅ Imehifadhiwa!';}
+</script>
+</body></html>
