@@ -22,6 +22,20 @@ let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],
 function saveVerse(key,list){ try{ localStorage.setItem('TCC_'+key, JSON.stringify(list)); }catch(e){} }
 function getVerse(key){ try{ let s=localStorage.getItem('TCC_'+key); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
 function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
+  // ENGLISH IKAWE NDANI - ISAVE YENYEWE
+let EN_CACHE = {};
+function getEnglish(book, chap) {
+  let key = "EN_" + book + "_" + chap;
+  if (EN_CACHE[key]) return EN_CACHE[key];
+  let saved = localStorage.getItem(key);
+  if (saved) { EN_CACHE[key] = JSON.parse(saved); return EN_CACHE[key]; }
+  return null;
+}
+function saveEnglish(book, chap, data) {
+  let key = "EN_" + book + "_" + chap;
+  EN_CACHE[key] = data;
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){}
+}
 function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
 function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
 function doSearch(){let q=document.getElementById('searchBox').value.trim().toLowerCase();if(!q){showTestament(curTest);return;}let f=ALL.filter(b=>b[0].toLowerCase().includes(q));let h='<h3>🔍 '+q+'</h3>';f.forEach(b=>{h+='<button class="bookBtn" data-book="'+b[0]+'" data-count="'+b[1]+'">📖 '+b[0]+' - '+b[1]+' ➡️</button>';});document.getElementById('booksList').innerHTML=h;bindBooks();}
