@@ -21,21 +21,32 @@ let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],
 // HIFADHI KIMYA KIMYA - HAKUNA MANENO YANAYOONEKANA
 function saveVerse(key,list){ try{ localStorage.setItem('TCC_'+key, JSON.stringify(list)); }catch(e){} }
 function getVerse(key){
-  try{ let s=localStorage.getItem(key); if(s) return JSON.parse(s); }catch(e){}
+  try{
+    let s=localStorage.getItem(key);
+    if(s){
+      let arr = JSON.parse(s);
+      // Kama iliyo-save zamani ni maandishi tu, ibadilishe kuwa object kama Kiswahili
+      if(arr.length && typeof arr[0]==='string'){
+        arr = arr.map((t,i)=>({verse:i+1,num:i+1,v:i+1,text:t,t:t}));
+        localStorage.setItem(key, JSON.stringify(arr));
+      }
+      return arr;
+    }
+  }catch(e){}
   if(lang==='en'){
     let p = key.split('_');
     let c = p.pop();
     if(c==='en'||c==='sw') c = p.pop();
     let b = p.join(' ');
     fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv").then(r=>r.json()).then(d=>{
-      let verses = d.verses.map(v=>v.text);
+      let verses = d.verses.map(v=>({verse:v.verse,num:v.verse,v:v.verse,text:v.text,t:v.text}));
       localStorage.setItem(key, JSON.stringify(verses));
       location.reload();
     });
-    return ["Loading English... ngoja sekunde 2 ifunguke tena"];
+    return [{verse:1,num:1,v:1,text:"Loading English... ngoja sekunde 2",t:"Loading English... ngoja sekunde 2"}];
   }
   return [];
-        }
+}
 function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
 function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
 function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
