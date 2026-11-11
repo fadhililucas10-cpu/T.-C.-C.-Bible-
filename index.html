@@ -19,34 +19,57 @@ document.getElementById('noteBox').value=localStorage.getItem('ludNote')||'';
 let T=[["💍 MARRIAGE","Ndoa ni agano. Mume mpende mke kama Kristo. Mke mtii mume. Omba, samehe, ongea.",[["Genesis 2:24","Wawe mwili mmoja"]]],["❤️ RELATIONSHIP","Mahusiano ya Mungu yana mipaka.",[["Proverbs 4:23","Linda moyo wako"]]],["🧒 YOUTH","Epuka ngono kabla ya ndoa. Mwili ni hekalu.",[["1 Corinthians 6:18","Ikimbieni zinaa"]]],["💭 DREAMS","Mungu huongea kupitia ndoto.",[["Genesis 37:5","Yusufu aliota"]]],["🙏 FAITH","Imani ni kuamini hata huoni.",[["Hebrews 11:1","Imani ni hakika"]]],["❤️ LOVE","Mungu ni upendo.",[["John 3:16","Mungu aliupenda ulimwengu"]]],["⏳ PATIENCE","Subiri wakati wa Mungu.",[["Psalms 27:14","Mngoje Bwana"]]],["🤝 UNITY","Tuko mwili mmoja.",[["Psalms 133:1","Ni vema ndugu wakikaa pamoja"]]],["🛡️ SELF-CONTROL","Kujizuia.",[["Galatians 5:23","Tunda ni kujizuia"]]],["💊 HEALING","Mungu ni Mponyaji.",[["Exodus 15:26","Mimi ni Bwana nikuponyaye"]]],["🤍 FORGIVENESS","Samehe.",[["Matthew 6:14","Mkisamehe, Baba atawasamehe"]]],["👑 GOD","Mungu ni Baba.",[["Genesis 1:1","Mungu aliumba"]]],["😇 ANGELS","Malaika wanatulinda.",[["Psalms 91:11","Atawaagiza malaika"]]],["✝️ JESUS","Yesu alikufa na akafufuka.",[["John 3:16","Mungu alimtoa Mwanawe"]]],["😨 OVERCOME FEAR","Hofu inatoka kwa shetani.",[["2 Timothy 1:7","Mungu hakutupa roho ya woga"]]],["⚔️ OVERCOME SATANIC ATTACKS","Silaha: Damu ya Yesu.",[["James 4:7","Mpingeni shetani"]]],["🙏 HOW TO PRAY","Sifu, Tubu, Omba.",[["Matthew 6:9","Baba yetu"]]],["😔 PRAYER IN STRUGGLE","Kimbilia Mungu.",[["Psalms 34:17","Bwana huwasikia"]]],["💰 BLESSING","Mungu anataka kukubariki.",[["Jeremiah 29:11","Mawazo ya tumaini"]]]];
 let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],ans:0},{q:"Nani alijenga Safina?",opts:["Musa","Nuhu","Daudi"],ans:1},{q:"Yesu alizaliwa wapi?",opts:["Nazareti","Bethlehemu","Misri"],ans:1}];
 // HIFADHI KIMYA KIMYA - HAKUNA MANENO YANAYOONEKANA
-function saveVerse(key,list){ try{ localStorage.setItem('TCC_'+key, JSON.stringify(list)); }catch(e){} }
 function getVerse(key){
+  // 1. Kama imeshapakiwa zamani, ionyeshe mara moja kama Kiswahili - hata offline
   try{
-    let s=localStorage.getItem(key);
+    let s = localStorage.getItem(key);
     if(s){
       let arr = JSON.parse(s);
-      // Kama iliyo-save zamani ni maandishi tu, ibadilishe kuwa object kama Kiswahili
+      // Badilisha data ya zamani mbovu kuwa kama Kiswahili
       if(arr.length && typeof arr[0]==='string'){
         arr = arr.map((t,i)=>({verse:i+1,num:i+1,v:i+1,text:t,t:t}));
         localStorage.setItem(key, JSON.stringify(arr));
       }
-      return arr;
+      // Kama data ni ya zamani yenye undefined, ifute ipakue upya
+      if(arr.length && (arr[0].text===undefined || arr[0].text==="undefined")){
+        localStorage.removeItem(key);
+      } else {
+        return arr;
+      }
     }
   }catch(e){}
-  if(lang==='en'){
-    let p = key.split('_');
-    let c = p.pop();
-    if(c==='en'||c==='sw') c = p.pop();
-    let b = p.join(' ');
-    fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv").then(r=>r.json()).then(d=>{
+
+  // 2. Kama ni Kiswahili na haipo, rudi tupu kama zamani
+  if(lang!=='en') return [];
+
+  // 3. Kama ni English na bado haijapakuliwa - pakua MARA MOJA tu, halafu save milele
+  let clean = key.replace(/_(en|sw)$/,'').replace(/^TCC_/,'');
+  let parts = clean.split('_');
+  let c = parts.pop();
+  let b = parts[parts.length-1];
+  if(parts.length>=2 && (parts[parts.length-2]==='1'||parts[parts.length-2]==='2'||parts[parts.length-2]==='3')){
+    b = parts[parts.length-2]+' '+b;
+  }
+
+  // Usipakue mara mbili kwa wakati mmoja
+  if(!window._loadingEnglish){
+    window._loadingEnglish = true;
+    fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv")
+    .then(r=>r.json())
+    .then(d=>{
+      window._loadingEnglish = false;
+      if(!d.verses) throw new Error("no verses");
       let verses = d.verses.map(v=>({verse:v.verse,num:v.verse,v:v.verse,text:v.text,t:v.text}));
       localStorage.setItem(key, JSON.stringify(verses));
       location.reload();
+    })
+    .catch(()=>{
+      window._loadingEnglish = false;
+      localStorage.removeItem(key);
     });
-    return [{verse:1,num:1,v:1,text:"Loading English... ngoja sekunde 2",t:"Loading English... ngoja sekunde 2"}];
   }
-  return [];
-}
+  return [{verse:1,num:1,v:1,text:"Loading English... fungua tena baada ya sekunde 3",t:"Loading English... fungua tena baada ya sekunde 3"}];
+  }
 function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
 function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
 function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
