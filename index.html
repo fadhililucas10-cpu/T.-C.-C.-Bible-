@@ -20,29 +20,20 @@ let T=[["💍 MARRIAGE","Ndoa ni agano. Mume mpende mke kama Kristo. Mke mtii mu
 let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],ans:0},{q:"Nani alijenga Safina?",opts:["Musa","Nuhu","Daudi"],ans:1},{q:"Yesu alizaliwa wapi?",opts:["Nazareti","Bethlehemu","Misri"],ans:1}];
 // HIFADHI KIMYA KIMYA - HAKUNA MANENO YANAYOONEKANA
 function getVerse(key){
-  // 1. Kama imeshapakiwa zamani, ionyeshe mara moja kama Kiswahili - hata offline
+  preloadEnglish(key);
+  // 1. KISWAHILI: Rudisha kama ilivyo, usibadilishe, usifute
   try{
     let s = localStorage.getItem(key);
     if(s){
       let arr = JSON.parse(s);
-      // Badilisha data ya zamani mbovu kuwa kama Kiswahili
-      if(arr.length && typeof arr[0]==='string'){
-        arr = arr.map((t,i)=>({verse:i+1,num:i+1,v:i+1,text:t,t:t}));
-        localStorage.setItem(key, JSON.stringify(arr));
-      }
-      // Kama data ni ya zamani yenye undefined, ifute ipakue upya
-      if(arr.length && (arr[0].text===undefined || arr[0].text==="undefined")){
-        localStorage.removeItem(key);
-      } else {
-        return arr;
-      }
+      if(arr && arr.length) return arr;
     }
   }catch(e){}
 
-  // 2. Kama ni Kiswahili na haipo, rudi tupu kama zamani
+  // Kama sio English, rudi tupu - Kiswahili kitapakiwa na saveVerse ya zamani kwenye file
   if(lang!=='en') return [];
 
-  // 3. Kama ni English na bado haijapakuliwa - pakua MARA MOJA tu, halafu save milele
+  // 2. ENGLISH: Kama haipo, pakua na save milele
   let clean = key.replace(/_(en|sw)$/,'').replace(/^TCC_/,'');
   let parts = clean.split('_');
   let c = parts.pop();
@@ -50,26 +41,50 @@ function getVerse(key){
   if(parts.length>=2 && (parts[parts.length-2]==='1'||parts[parts.length-2]==='2'||parts[parts.length-2]==='3')){
     b = parts[parts.length-2]+' '+b;
   }
-
-  // Usipakue mara mbili kwa wakati mmoja
   if(!window._loadingEnglish){
     window._loadingEnglish = true;
     fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv")
     .then(r=>r.json())
     .then(d=>{
       window._loadingEnglish = false;
-      if(!d.verses) throw new Error("no verses");
+      if(!d.verses) return;
       let verses = d.verses.map(v=>({verse:v.verse,num:v.verse,v:v.verse,text:v.text,t:v.text}));
-      localStorage.setItem(key, JSON.stringify(verses));
+      try{ localStorage.setItem(key, JSON.stringify(verses)); }catch(e){}
       location.reload();
     })
-    .catch(()=>{
-      window._loadingEnglish = false;
-      localStorage.removeItem(key);
-    });
+    .catch(()=>{ window._loadingEnglish = false; });
   }
-  return [{verse:1,num:1,v:1,text:"Loading English... fungua tena baada ya sekunde 3",t:"Loading English... fungua tena baada ya sekunde 3"}];
-  }
+  return [{verse:1,num:1,v:1,text:"Loading English...",t:"Loading English..."}];
+}
+
+// 3. ZILoad KWA PAMOJA: Ukiwa Kiswahili, pakua English kimya kimya nyuma, ili ukibadilisha iwe tayari
+function preloadEnglish(key){
+  try{
+    if(!key) return;
+    let enKey = key;
+    if(key.endsWith('_sw')) enKey = key.slice(0,-3)+'_en';
+    else if(!key.endsWith('_en')) enKey = key+'_en';
+    if(localStorage.getItem(enKey)) return;
+    if(window._preloadingEn) return;
+    window._preloadingEn = true;
+    let clean = enKey.replace(/_(en|sw)$/,'').replace(/^TCC_/,'');
+    let parts = clean.split('_');
+    let c = parts.pop();
+    let b = parts[parts.length-1];
+    if(parts.length>=2 && (parts[parts.length-2]==='1'||parts[parts.length-2]==='2'||parts[parts.length-2]==='3')){
+      b = parts[parts.length-2]+' '+b;
+    }
+    fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv")
+    .then(r=>r.json())
+    .then(d=>{
+      window._preloadingEn = false;
+      if(!d.verses) return;
+      let verses = d.verses.map(v=>({verse:v.verse,num:v.verse,v:v.verse,text:v.text,t:v.text}));
+      try{ localStorage.setItem(enKey, JSON.stringify(verses)); }catch(e){}
+    })
+    .catch(()=>{ window._preloadingEn = false; });
+  }catch(e){}
+           }
 function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
 function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
 function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
