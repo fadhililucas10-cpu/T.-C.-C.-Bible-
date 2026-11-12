@@ -24,12 +24,23 @@ function getVerse(key){ try{ let s=localStorage.getItem('TCC_'+key); return s ? 
 function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
   // ENGLISH IKAWE NDANI - ISAVE YENYEWE
 let EN_CACHE = {};
-function getEnglish(book, chap) {
-  let key = "EN_" + book + "_" + chap;
-  if (EN_CACHE[key]) return EN_CACHE[key];
-  let saved = localStorage.getItem(key);
-  if (saved) { EN_CACHE[key] = JSON.parse(saved); return EN_CACHE[key]; }
-  return null;
+function getEnglish(book,chap){
+let key="EN_"+book+"_"+chap;
+if(EN_CACHE[key]) return EN_CACHE[key];
+let saved=localStorage.getItem(key);
+if(saved){EN_CACHE[key]=JSON.parse(saved);return EN_CACHE[key];}
+preloadEnglish(book,chap);
+return null;
+}
+async function preloadEnglish(book,chap){
+let key="EN_"+book+"_"+chap;
+try{
+let r=await fetch("https://bible-api.com/"+encodeURIComponent(book+" "+chap));
+let j=await r.json();
+let list=j.verses.map(v=>v.verse+". "+v.text);
+saveEnglish(book,chap,list);
+showVerses(book,chap,list);
+}catch(e){}
 }
 function saveEnglish(book, chap, data) {
   let key = "EN_" + book + "_" + chap;
