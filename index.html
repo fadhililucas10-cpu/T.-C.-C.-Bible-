@@ -19,45 +19,72 @@ document.getElementById('noteBox').value=localStorage.getItem('ludNote')||'';
 let T=[["💍 MARRIAGE","Ndoa ni agano. Mume mpende mke kama Kristo. Mke mtii mume. Omba, samehe, ongea.",[["Genesis 2:24","Wawe mwili mmoja"]]],["❤️ RELATIONSHIP","Mahusiano ya Mungu yana mipaka.",[["Proverbs 4:23","Linda moyo wako"]]],["🧒 YOUTH","Epuka ngono kabla ya ndoa. Mwili ni hekalu.",[["1 Corinthians 6:18","Ikimbieni zinaa"]]],["💭 DREAMS","Mungu huongea kupitia ndoto.",[["Genesis 37:5","Yusufu aliota"]]],["🙏 FAITH","Imani ni kuamini hata huoni.",[["Hebrews 11:1","Imani ni hakika"]]],["❤️ LOVE","Mungu ni upendo.",[["John 3:16","Mungu aliupenda ulimwengu"]]],["⏳ PATIENCE","Subiri wakati wa Mungu.",[["Psalms 27:14","Mngoje Bwana"]]],["🤝 UNITY","Tuko mwili mmoja.",[["Psalms 133:1","Ni vema ndugu wakikaa pamoja"]]],["🛡️ SELF-CONTROL","Kujizuia.",[["Galatians 5:23","Tunda ni kujizuia"]]],["💊 HEALING","Mungu ni Mponyaji.",[["Exodus 15:26","Mimi ni Bwana nikuponyaye"]]],["🤍 FORGIVENESS","Samehe.",[["Matthew 6:14","Mkisamehe, Baba atawasamehe"]]],["👑 GOD","Mungu ni Baba.",[["Genesis 1:1","Mungu aliumba"]]],["😇 ANGELS","Malaika wanatulinda.",[["Psalms 91:11","Atawaagiza malaika"]]],["✝️ JESUS","Yesu alikufa na akafufuka.",[["John 3:16","Mungu alimtoa Mwanawe"]]],["😨 OVERCOME FEAR","Hofu inatoka kwa shetani.",[["2 Timothy 1:7","Mungu hakutupa roho ya woga"]]],["⚔️ OVERCOME SATANIC ATTACKS","Silaha: Damu ya Yesu.",[["James 4:7","Mpingeni shetani"]]],["🙏 HOW TO PRAY","Sifu, Tubu, Omba.",[["Matthew 6:9","Baba yetu"]]],["😔 PRAYER IN STRUGGLE","Kimbilia Mungu.",[["Psalms 34:17","Bwana huwasikia"]]],["💰 BLESSING","Mungu anataka kukubariki.",[["Jeremiah 29:11","Mawazo ya tumaini"]]]];
 let TRIVIA=[{q:"Mungu aliumba nini siku ya kwanza?",opts:["Nuru","Mwezi","Mtu"],ans:0},{q:"Nani alijenga Safina?",opts:["Musa","Nuhu","Daudi"],ans:1},{q:"Yesu alizaliwa wapi?",opts:["Nazareti","Bethlehemu","Misri"],ans:1}];
 // HIFADHI KIMYA KIMYA - HAKUNA MANENO YANAYOONEKANA
-function getVerse(key){
-  preloadEnglish(key);
-  // 1. KISWAHILI: Rudisha kama ilivyo, usibadilishe, usifute
-  try{
-    let s = localStorage.getItem(key);
-    if(s){
-      let arr = JSON.parse(s);
-      if(arr && arr.length) return arr;
-    }
-  }catch(e){}
-
-  // Kama sio English, rudi tupu - Kiswahili kitapakiwa na saveVerse ya zamani kwenye file
-  if(lang!=='en') return [];
-
-  // 2. ENGLISH: Kama haipo, pakua na save milele
-  let clean = key.replace(/_(en|sw)$/,'').replace(/^TCC_/,'');
-  let parts = clean.split('_');
-  let c = parts.pop();
-  let b = parts[parts.length-1];
-  if(parts.length>=2 && (parts[parts.length-2]==='1'||parts[parts.length-2]==='2'||parts[parts.length-2]==='3')){
-    b = parts[parts.length-2]+' '+b;
-  }
-  if(!window._loadingEnglish){
-    window._loadingEnglish = true;
-    fetch("https://bible-api.com/"+encodeURIComponent(b+" "+c)+"?translation=kjv")
-    .then(r=>r.json())
-    .then(d=>{
-      window._loadingEnglish = false;
-      if(!d.verses) return;
-      let verses = d.verses.map(v=>({verse:v.verse,num:v.verse,v:v.verse,text:v.text,t:v.text}));
-      try{ localStorage.setItem(key, JSON.stringify(verses)); }catch(e){}
-      location.reload();
-    })
-    .catch(()=>{ window._loadingEnglish = false; });
-  }
-  return [{verse:1,num:1,v:1,text:"Loading English...",t:"Loading English..."}];
+function saveVerse(key,list){ try{ localStorage.setItem('TCC_'+key, JSON.stringify(list)); }catch(e){} }
+function getVerse(key){ try{ let s=localStorage.getItem('TCC_'+key); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function setLang(l){lang=l;document.getElementById('langShow').innerText=(l=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(l=='sw'?'SWAHILI':'ENGLISH');}
+  // ENGLISH IKAWE NDANI - ISAVE YENYEWE
+let EN_CACHE = {};
+function getEnglish(book, chap) {
+  let key = "EN_" + book + "_" + chap;
+  if (EN_CACHE[key]) return EN_CACHE[key];
+  let saved = localStorage.getItem(key);
+  if (saved) { EN_CACHE[key] = JSON.parse(saved); return EN_CACHE[key]; }
+  return null;
 }
-
-// 3. ZILoad KWA PAMOJA: Ukiwa Kiswahili, pakua English kimya kimya nyuma, ili ukibadilisha iwe tayari
+function saveEnglish(book, chap, data) {
+  let key = "EN_" + book + "_" + chap;
+  EN_CACHE[key] = data;
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){}
+}
+function switchLangInVerse(){lang=(lang=='sw'?'en':'sw');document.getElementById('langShow').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');document.getElementById('langShow2').innerText=(lang=='sw'?'SWAHILI':'ENGLISH');loadVerses(curBook,curChap);}
+function goPage(id){['pageHome','pageBooks','pageChapters','pageVerses','pageTeach','pageTrivia','pageNote'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0);if(id=='pageBooks')showTestament(curTest);if(id=='pageTeach')showTeach();if(id=='pageTrivia')showQ();}
+function doSearch(){let q=document.getElementById('searchBox').value.trim().toLowerCase();if(!q){showTestament(curTest);return;}let f=ALL.filter(b=>b[0].toLowerCase().includes(q));let h='<h3>🔍 '+q+'</h3>';f.forEach(b=>{h+='<button class="bookBtn" data-book="'+b[0]+'" data-count="'+b[1]+'">📖 '+b[0]+' - '+b[1]+' ➡️</button>';});document.getElementById('booksList').innerHTML=h;bindBooks();}
+function showTestament(t){curTest=t;let list=t=='OT'?OT:NT;let h='<h3>'+(t=='OT'?'📜 OLD - 39':'✝️ NEW - 27')+'</h3>';list.forEach(b=>{h+='<button class="bookBtn" data-book="'+b[0]+'" data-count="'+b[1]+'">📖 '+b[0]+' - '+b[1]+' ➡️</button>';});document.getElementById('booksList').innerHTML=h;bindBooks();}
+function bindBooks(){document.querySelectorAll('[data-book]').forEach(btn=>{btn.onclick=()=>{curBook=btn.getAttribute('data-book');curCount=parseInt(btn.getAttribute('data-count'));goPage('pageChapters');showChapters();};});}
+function showChapters(){document.getElementById('chapTitle').innerText=curBook;document.getElementById('chapSub').innerText=curBook+' ina sura '+curCount;let h='';for(let i=1;i<=curCount;i++){h+='<button class="chapBtn" data-chap="'+i+'">'+i+'</button> ';}document.getElementById('chaptersList').innerHTML=h;document.querySelectorAll('[data-chap]').forEach(btn=>{btn.onclick=()=>{curChap=parseInt(btn.getAttribute('data-chap'));goPage('pageVerses');loadVerses(curBook,curChap);};});}
+function prevChap(){if(curChap>1){curChap--;loadVerses(curBook,curChap);}}
+function nextChap(){if(curChap<curCount){curChap++;loadVerses(curBook,curChap);}}
+async function loadVerses(book,chap){
+  let key=book+'-'+chap+'-'+lang;
+  document.getElementById('verseTitle').innerText=book+' '+chap;
+  let saved=getVerse(key);
+  if(saved && saved.length>0){ showVerses(book,chap,saved); return; }
+  document.getElementById('versesList').innerHTML='';
+  try{
+    let list=[];
+    if(lang=='en'){
+      let r=await fetch('https://bible-api.com/'+encodeURIComponent(book+' '+chap));
+      let d=await r.json();
+      d.verses.forEach(v=>list.push({num:v.verse,text:v.text}));
+    }else{
+      let bookNum=ALL.findIndex(b=>b[0]==book)+1;
+      let r=await fetch('https://bolls.life/get-text/SUV/'+bookNum+'/'+chap+'/');
+      let d=await r.json();
+      if(Array.isArray(d)) d.forEach(v=>list.push({num:v.verse,text:v.text}));
+      if(list.length==0) throw new Error('empty');
+    }
+    saveVerse(key,list);
+    showVerses(book,chap,list);
+  }catch(e){
+    document.getElementById('versesList').innerHTML='';
+  }
+}
+// SASA INAONYESHA VERSE TU - HAKUNA MANENO MENGINE
+function showVerses(book,chap,list){
+  let h='<h3>'+book+' '+chap+' - '+(lang=='sw'?'Kiswahili':'English')+'</h3>';
+  list.forEach(v=>{h+='<div class="verse"><b>'+v.num+'.</b> '+v.text+'</div>';});
+  document.getElementById('versesList').innerHTML=h;window.scrollTo(0,0);
+}
+function showTeach(arr){let a=arr||T;let h='';a.forEach((t)=>{let idx=T.indexOf(t);h+='<button class="topicBtn" data-topic="'+idx+'">'+t[0]+' ➡️</button>';});document.getElementById('teachList').innerHTML=h;if(!arr)document.getElementById('teachDetail').innerHTML='';document.querySelectorAll('[data-topic]').forEach(btn=>{btn.onclick=()=>showTopic(parseInt(btn.getAttribute('data-topic')));});}
+function searchTeach(){let q=document.getElementById('teachSearch').value.toLowerCase();if(!q){showTeach();return;}let f=T.filter(t=>t[0].toLowerCase().includes(q)||t[1].toLowerCase().includes(q));showTeach(f);}
+function showTopic(i){let t=T[i];let h='<h3>'+t[0]+'</h3><p>'+t[1]+'</p><p><b>📖 Verse:</b></p>';t[2].forEach(v=>{h+='<div class="verse"><b>'+v[0]+'</b><br>'+v[1]+'<br><button onclick="openVerseFromRef(\''+v[0]+'\')">📖 SOMA KAMILI</button></div>';});document.getElementById('teachDetail').innerHTML=h;}
+function openVerseFromRef(ref){let p=ref.split(' ');let cv=p.pop();let book=p.join(' ');let chap=cv.split(':')[0];let b=ALL.find(x=>x[0].toLowerCase()==book.toLowerCase());if(!b)return;curBook=b[0];curCount=b[1];curChap=parseInt(chap);goPage('pageVerses');loadVerses(curBook,curChap);}
+function showQ(){let q=TRIVIA[qIndex];document.getElementById('qText').innerText=(qIndex+1)+'. '+q.q;document.getElementById('qMsg').innerText='';let h='';q.opts.forEach((o,i)=>{h+='<button onclick="checkAns('+i+')">'+o+'</button> ';});document.getElementById('qBtns').innerHTML=h;document.getElementById('score').innerText='Score: '+score;}
+function checkAns(i){let q=TRIVIA[qIndex];if(i==q.ans){score++;document.getElementById('qMsg').innerText='✅ Sahihi!';}else{document.getElementById('qMsg').innerText='❌ Jibu ni: '+q.opts[q.ans];}document.getElementById('score').innerText='Score: '+score;}
+function nextQ(){qIndex=(qIndex+1)%TRIVIA.length;showQ();}
+function saveNote(){localStorage.setItem('ludNote',document.getElementById('noteBox').value);document.getElementById('noteMsg').innerText='✅ Imehifadhiwa!';}
+</script>
+</body></html>
 function preloadEnglish(key){
   try{
     if(!key) return;
