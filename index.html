@@ -94,6 +94,20 @@ function showQ(){let q=TRIVIA[qIndex];document.getElementById('qText').innerText
 function checkAns(i){let q=TRIVIA[qIndex];if(i==q.ans){score++;document.getElementById('qMsg').innerText='✅ Sahihi!';}else{document.getElementById('qMsg').innerText='❌ Jibu ni: '+q.opts[q.ans];}document.getElementById('score').innerText='Score: '+score;}
 function nextQ(){qIndex=(qIndex+1)%TRIVIA.length;showQ();}
 function saveNote(){localStorage.setItem('ludNote',document.getElementById('noteBox').value);document.getElementById('noteMsg').innerText='✅ Imehifadhiwa!';}
+  const BIBLE_FILE_URL = "https://raw.githubusercontent.com/scrollmapper/bible_databases/master/JSON/KJV.json";
+
+async function loadEnglishBible(){
+  let saved = localStorage.getItem("EN_BIBLE_ALL");
+  if(saved) return JSON.parse(saved);
+  if(!navigator.onLine) return null;
+  try{
+    let r = await fetch(BIBLE_FILE_URL);
+    let data = await r.json();
+    localStorage.setItem("EN_BIBLE_ALL", JSON.stringify(data));
+    return data;
+  }catch(e){ return null; }
+}
+window.addEventListener('load', ()=>{ loadEnglishBible(); });
 </script>
 </body></html>
 
