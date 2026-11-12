@@ -57,9 +57,14 @@ async function loadVerses(book,chap){
   try{
     let list=[];
     if(lang=='en'){
-      let r=await fetch('https://bible-api.com/'+encodeURIComponent(book+' '+chap));
-      let d=await r.json();
-      d.verses.forEach(v=>list.push({num:v.verse,text:v.text}));
+    let bible = await loadEnglishBible();
+if(!bible) throw new Error("Bible haijapakuliwa");
+let bookObj = bible.find(b=>b.name.toLowerCase()==book.toLowerCase());
+if(!bookObj) throw new Error("Kitabu hakikupatikana");
+let chapterVerses = bookObj.chapters[chap-1];
+chapterVerses.forEach((text, i)=>{
+  list.push({num:i+1, text:text});
+});
     }else{
       let bookNum=ALL.findIndex(b=>b[0]==book)+1;
       let r=await fetch('https://bolls.life/get-text/SUV/'+bookNum+'/'+chap+'/');
